@@ -1,16 +1,22 @@
-# Check if .env file exists in the same directory
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 if (-Not (Test-Path .env)) {
     Write-Host "Error: .env file not found! Please create one in the current directory."
     exit 1
 }
 
-# Check if Docker is installed
-if (-Not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "This script requires Docker to be installed and running on your system."
+function CommandExists {
+    param (
+        [string]$Command
+    )
+    $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
+}
+
+if (-not (CommandExists -Command "docker")) {
+    Write-Output "Docker is not installed. Please install Docker from https://www.docker.com/get-started"
     exit 1
 }
 
-# Check if docker-compose is available
 if ((docker compose version) -ne $null) {
     $DOCKER_COMPOSE_CMD = "docker compose"
 } elseif ((docker-compose version) -ne $null) {
@@ -20,11 +26,13 @@ if ((docker compose version) -ne $null) {
     exit 1
 }
 
-# Create required files
 Write-Host "Creating required files..."
 
 # Create docker-compose.yml file
-@"
+$path = "docker-compose.yml"
+$utf8Encoding = New-Object System.Text.UTF8Encoding $false  # $false removes the BOM
+$streamWriter = New-Object System.IO.StreamWriter -ArgumentList $path, $false, $utf8Encoding
+$streamWriter.WriteLine(@"
 version: '3'
 
 services:
@@ -44,7 +52,7 @@ services:
       - WATCH_FOLDER=/app/shared_data
       - DATA_FOLDER=/app/backend_data
     ports:
-      - `$`{BACKEND_PORT:-8000}:`$`{BACKEND_PORT:-8000} 
+      - "`$`{BACKEND_PORT:-8000}:`$`{BACKEND_PORT:-8000}"
     depends_on:
       db:
         condition: service_healthy
@@ -120,7 +128,7 @@ services:
     image: lyrasis/blazegraph:2.1.5
     container_name: blazegraph
     ports:
-      - `$`{BLAZEGRAPH_PORT:-9999}:8080
+      - "`$`{BLAZEGRAPH_PORT:-9999}:8080"
     environment:
       - JAVA_OPTS=-Xms`$`{BLAZEGRAPH_MIN_MEMORY}g -Xmx`$`{BLAZEGRAPH_MAX_MEMORY}g -Dfile.encoding=UTF-8 -Dfile.client.encoding=UTF-8 -Dclient.encoding.override=UTF-8
     env_file:
@@ -157,14 +165,14 @@ services:
     image: nginx:alpine
     container_name: nginx
     ports: 
-      - `$`{NGINX_PORT:-8888}:`$`{BLAZEGRAPH_PORT:-9999}
+      - "`$`{NGINX_PORT:-8888}:`$`{BLAZEGRAPH_PORT:-9999}"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf.template
     depends_on:
       - blazegraph
     environment:
       - BLAZEGRAPH_PORT=`$`{BLAZEGRAPH_PORT:-9999}
-    command: /bin/sh -c "envsubst `$`$BLAZEGRAPH_PORT` < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+    command: /bin/sh -c "envsubst '`$`$BLAZEGRAPH_PORT`' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
     restart: unless-stopped
 
 
@@ -175,7 +183,7 @@ services:
       VITE_API_BASE_URL: `$`{VITE_API_BASE_URL}
       VITE_API_SPARQL_BASE_URL: `$`{VITE_API_SPARQL_BASE_URL}
       VITE_WS_API_BASE_URL: `$`{VITE_WS_API_BASE_URL}
-      VITE_SUBDIRNAME: `$`{SUBDIRNAME}
+      VITE_SUBDIRNAME: `$`{VITE_SUBDIRNAME}
     container_name: web
     ports:
       - "3001:5173"
@@ -185,12 +193,17 @@ services:
 volumes:
   backend_data:
     driver: local
-"@ | Out-File -Encoding UTF8 docker-compose.yml
+"@)
+$streamWriter.Close()
+
 
 # Create nginx.conf file
-@"
+$path = "nginx.conf"
+$utf8Encoding = New-Object System.Text.UTF8Encoding $false  # $false removes the BOM
+$streamWriter = New-Object System.IO.StreamWriter -ArgumentList $path, $false, $utf8Encoding
+$streamWriter.WriteLine(@"
 server {
-  listen $BLAZEGRAPH_PORT;
+  listen `$`BLAZEGRAPH_PORT;
 
   location /bigdata/ {
     proxy_hide_header Access-Control-Allow-Origin;
@@ -198,10 +211,14 @@ server {
     proxy_pass http://blazegraph:8080/bigdata/;  # Use the service name instead of localhost
   }
 }
-"@ | Out-File -Encoding UTF8 nginx.conf
+"@)
+$streamWriter.Close()
 
 # Create RWStore.properties file
-@"
+$path = "RWStore.properties"
+$utf8Encoding = New-Object System.Text.UTF8Encoding $false  # $false removes the BOM
+$streamWriter = New-Object System.IO.StreamWriter -ArgumentList $path, $false, $utf8Encoding
+$streamWriter.WriteLine(@"
 # Note: These options are applied when the journal and the triple store are
 # first created.
 
@@ -275,7 +292,9 @@ com.bigdata.rwstore.RWStore.smallSlotType=1024
 # See https://jira.blazegraph.com/browse/BLZG-1385 - reduce LRU cache timeout
 com.bigdata.journal.AbstractJournal.historicalIndexCacheCapacity=20
 com.bigdata.journal.AbstractJournal.historicalIndexCacheTimeout=5
-"@ | Out-File -Encoding UTF8 RWStore.properties
+"@)
+$streamWriter.Close()
+
 
 Write-Host "Files created successfully!"
 
