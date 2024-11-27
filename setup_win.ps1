@@ -1,5 +1,3 @@
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-
 if (-Not (Test-Path .env)) {
     Write-Host "Error: .env file not found! Please create one in the current directory."
     exit 1
