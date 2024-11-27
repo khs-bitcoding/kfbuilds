@@ -63,10 +63,10 @@ services:
     container_name: db
     restart: always
     volumes:
-      - ${MYSQL_DIR}:/var/lib/mysql
+      - ${DB_DIR}:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: "kf2024@HIKE"
+      MYSQL_DATABASE: ${DB_DATABASE}
     ports:
       - "3307:3306"
     healthcheck:
@@ -107,7 +107,7 @@ services:
   blazegraph-setup:
     image: alpine
     volumes:
-      - ${BLAZEGRAPH_DIR}:/data
+      - ${TS_DIR}:/data
     env_file: .env
     command: >
       sh -c "
@@ -125,14 +125,14 @@ services:
     image: lyrasis/blazegraph:2.1.5
     container_name: blazegraph
     ports:
-      - "${BLAZEGRAPH_PORT:-9999}:8080"
+      - "${TS_PORT:-9999}:8080"
     environment:
-      - JAVA_OPTS=-Xms${BLAZEGRAPH_MIN_MEMORY}g -Xmx${BLAZEGRAPH_MAX_MEMORY}g -Dfile.encoding=UTF-8 -Dfile.client.encoding=UTF-8 -Dclient.encoding.override=UTF-8
+      - JAVA_OPTS=-Xms${TS_MIN_MEMORY}g -Xmx${TS_MAX_MEMORY}g -Dfile.encoding=UTF-8 -Dfile.client.encoding=UTF-8 -Dclient.encoding.override=UTF-8
     env_file:
       - .env
     volumes:
       - ${IMPORT_DIR}:/blazegraph/shared_data
-      - ${BLAZEGRAPH_DIR}/bigdata.jnl:/var/lib/jetty/bigdata.jnl
+      - ${TS_DIR}/bigdata.jnl:/var/lib/jetty/bigdata.jnl
       - ./RWStore.properties:/RWStore.properties
     restart: unless-stopped
     depends_on:
@@ -162,14 +162,14 @@ services:
     image: nginx:alpine
     container_name: nginx
     ports: 
-      - "${NGINX_PORT:-8888}:${BLAZEGRAPH_PORT:-9999}"
+      - "${NGINX_PORT:-8888}:${TS_PORT:-9999}"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf.template
     depends_on:
       - blazegraph
     environment:
-      - BLAZEGRAPH_PORT=${BLAZEGRAPH_PORT:-9999}
-    command: /bin/sh -c "envsubst '$$BLAZEGRAPH_PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+      - TS_PORT=${TS_PORT:-9999}
+    command: /bin/sh -c "envsubst '$$TS_PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
     restart: unless-stopped
 
 
@@ -182,20 +182,33 @@ services:
       VITE_WS_API_BASE_URL: ${VITE_WS_API_BASE_URL}
       VITE_SUBDIRNAME: ${VITE_SUBDIRNAME}
     container_name: web
-    ports:
-      - "3001:5173"
     depends_on:
       - backend
+
+
+  nginx-build:
+    image: khsb2002/nginx-build:latest
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_API_SPARQL_BASE_URL: ${VITE_API_SPARQL_BASE_URL}
+      VITE_WS_API_BASE_URL: ${VITE_WS_API_BASE_URL}
+      VITE_SUBDIRNAME: ${VITE_SUBDIRNAME}
+    ports:
+      - "3001:80"
+    depends_on:
+      - web
+
 
 volumes:
   backend_data:
     driver: local
+
 EOF
 
 # Extract nginx.conf
 cat << 'EOF' > nginx.conf
 server {
-  listen $BLAZEGRAPH_PORT;
+  listen $TS_PORT;
 
   location /bigdata/ {
     proxy_hide_header Access-Control-Allow-Origin;
@@ -203,6 +216,21 @@ server {
     proxy_pass http://blazegraph:8080/bigdata/;  # Use the service name instead of localhost
   }
 }
+EOF
+
+# Extract nginx.conf
+cat << 'EOF' > webnginx.conf
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    location / {
+        try_files $uri /index.html;
+    }
+    error_page 404 /index.html;
+}
+
 EOF
 
 # Extract RWStore.properties
