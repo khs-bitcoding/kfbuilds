@@ -11,14 +11,14 @@ if ! [ -x "$(command -v docker)" ]; then
     exit 1
 fi
 
-if ! docker info > /dev/null 2>&1; then
+if ! sudo docker info > /dev/null 2>&1; then
     echo "Docker appears to be installed but not running. Please start Docker and try again."
     exit 1
 fi
 
-if docker compose version &> /dev/null; then
+if sudo docker compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker compose"
-elif docker-compose version &> /dev/null; then
+elif sudo docker-compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker-compose"
 else
     echo "Docker Compose is not installed. Please install Docker Compose to continue."
