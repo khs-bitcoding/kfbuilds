@@ -223,6 +223,7 @@ cat << 'EOF' > webnginx.conf
 server {
     listen 80;
     server_name localhost;
+    client_max_body_size 200M;
     root /usr/share/nginx/html;
     index index.html;
     location / {
