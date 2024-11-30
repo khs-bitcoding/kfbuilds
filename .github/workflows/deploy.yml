@@ -14,15 +14,17 @@ jobs:
       - name: Connect to server via SSH and run commands
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -t -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           if [ -d "${{ secrets.BASE_DIR }}" ]; then
               cd ${{ secrets.BASE_DIR }}
               git pull
               echo "git pull done"
               chmod +x setup_ubuntu_mac.sh
               echo "grant access"
+              sudo systemctl start docker
+              sudo systemctl enable docker
               ./setup_ubuntu_mac.sh
-              echo "successfully execute .sh file "
+              echo "successfully execute .sh file"
           else
               echo "Directory ${{ secrets.BASE_DIR }} does not exist."
               exit 1
