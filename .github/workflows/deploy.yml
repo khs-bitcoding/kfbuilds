@@ -19,7 +19,7 @@ jobs:
               cd ${{ secrets.BASE_DIR }}
               git pull
               echo "git pull done"
-              echo pwd
+              echo "$(pwd)"
               chmod +x setup_ubuntu_mac.sh
               echo "grant access"
               ./setup_ubuntu_mac.sh
