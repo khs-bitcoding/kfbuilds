@@ -1,4 +1,10 @@
-if (-Not (Test-Path .env)) {
+# Get the directory where the script is located
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Check if .env file exists in the same directory as the script
+$envFilePath = Join-Path $scriptDir '.env'
+
+if (-Not (Test-Path $envFilePath)) {
     Write-Host "Error: .env file not found! Please create one in the current directory."
     exit 1
 }
@@ -322,7 +328,6 @@ com.bigdata.journal.AbstractJournal.historicalIndexCacheCapacity=20
 com.bigdata.journal.AbstractJournal.historicalIndexCacheTimeout=5
 "@)
 $streamWriter.Close()
-
 
 Write-Host "Files created successfully!"
 
