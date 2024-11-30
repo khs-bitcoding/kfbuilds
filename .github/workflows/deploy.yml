@@ -11,12 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Connect to server via SSH
+      - name: Connect to server via SSH and run commands
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
-          echo "Working"
-          cd /home/devuser1/KFactory/KF_SCRIPT/kfbuilds
-          git pull
-          echo "git pull done"
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          if [ -d "/home/devuser1/KFactory/KF_SCRIPT/kfbuilds" ]; then
+              cd /home/devuser1/KFactory/KF_SCRIPT/kfbuilds
+              git pull
+              echo "git pull done"
+          else
+              echo "Directory /home/devuser1/KFactory/KF_SCRIPT/kfbuilds does not exist."
+              exit 1
+          fi
           EOF
