@@ -11,14 +11,14 @@ if ! [ -x "$(command -v docker)" ]; then
     exit 1
 fi
 
-if ! sudo docker info > /dev/null 2>&1; then
+if ! docker info > /dev/null 2>&1; then
     echo "Docker appears to be installed but not running. Please start Docker and try again."
     exit 1
 fi
 
-if sudo docker compose version &> /dev/null; then
+if docker compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker compose"
-elif sudo docker-compose version &> /dev/null; then
+elif docker-compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker-compose"
 else
     echo "Docker Compose is not installed. Please install Docker Compose to continue."
@@ -315,7 +315,7 @@ echo "Files created successfully!"
 
 # Build and start Docker containers
 echo "Building and starting Docker containers..."
-sudo $DOCKER_COMPOSE_CMD up --build -d
+$DOCKER_COMPOSE_CMD up --build -d
 
 if [ $? -eq 0 ]; then
     echo "Project is up and running!"
