@@ -24,3 +24,7 @@ jobs:
               exit 1
           fi
           EOF
+      - name: Start project
+        run: |
+          chmod +x setup_ubuntu_mac.sh
+          ./setup_ubuntu_mac.sh
