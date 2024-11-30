@@ -21,8 +21,8 @@ jobs:
               echo "git pull done"
               chmod +x setup_ubuntu_mac.sh
               echo "grant access"
-              sudo systemctl start docker
-              sudo systemctl enable docker
+              echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl start docker
+              echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl enable docker
               ./setup_ubuntu_mac.sh
               echo "successfully execute .sh file"
           else
