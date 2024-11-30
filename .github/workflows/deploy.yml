@@ -19,12 +19,12 @@ jobs:
               cd ${{ secrets.BASE_DIR }}
               git pull
               echo "git pull done"
+              chmod +x setup_ubuntu_mac.sh
+              echo "grant access"
+              ./setup_ubuntu_mac.sh
+              echo "successfully execute .sh file "
           else
               echo "Directory ${{ secrets.BASE_DIR }} does not exist."
               exit 1
           fi
           EOF
-      - name: Start project
-        run: |
-          chmod +x setup_ubuntu_mac.sh
-          ./setup_ubuntu_mac.sh
