@@ -21,7 +21,4 @@ jobs:
       run: ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
       
     - name: checked connect or not
-      run: |
-        "Base Path: ${{ secrets.BASE_PATH }}"  
-        la -a
-
+      run: echo "Base Path: ${{ secrets.BASE_PATH }}"
