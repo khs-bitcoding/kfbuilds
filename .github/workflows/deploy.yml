@@ -16,15 +16,38 @@ jobs:
           sudo apt-get update && sudo apt-get install -y sshpass
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           if [ -d "${{ secrets.BASE_DIR }}" ]; then
-              cd ${{ secrets.BASE_DIR }}/kfbuilds/ 
-              git pull
-              echo "git pull done"
-              chmod +x "${{ secrets.BASE_DIR }}"/kfbuilds/setup_ubuntu_mac.sh
-              echo "grant access"
-              ./"${{ secrets.BASE_DIR }}"/kfbuilds/setup_ubuntu_mac.sh 
-              echo "successfully execute .sh file "
-          else
-              echo "Directory ${{ secrets.BASE_DIR }} does not exist."
+            echo "Directory exists: ${{ secrets.BASE_DIR }}"
+      
+            # Check if the kfbuilds directory exists
+            if [ -d "${{ secrets.BASE_DIR }}/kfbuilds" ]; then
+              cd "${{ secrets.BASE_DIR }}/kfbuilds"
+      
+              # Check if it's a Git repository
+              if [ -d ".git" ]; then
+                git pull
+                echo "git pull done"
+              else
+                echo "Not a valid git repository"
+                exit 1
+              fi
+      
+              # Check if the setup script exists
+              if [ -f "${{ secrets.BASE_DIR }}/kfbuilds/setup_ubuntu_mac.sh" ]; then
+                chmod +x "${{ secrets.BASE_DIR }}/kfbuilds/setup_ubuntu_mac.sh"
+                echo "grant access"
+                "${{ secrets.BASE_DIR }}/kfbuilds/setup_ubuntu_mac.sh"
+                echo "successfully executed .sh file"
+              else
+                echo "setup_ubuntu_mac.sh not found"
+                exit 1
+              fi
+            else
+              echo "kfbuilds directory does not exist"
               exit 1
+            fi
+          else
+            echo "Directory ${{ secrets.BASE_DIR }} does not exist."
+            exit 1
           fi
           EOF
+      
