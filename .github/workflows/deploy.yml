@@ -19,9 +19,9 @@ jobs:
               cd ${{ secrets.BASE_DIR }}/kfbuilds/ 
               git pull
               echo "git pull done"
-              chmod +x ${{ secrets.BASE_DIR }}/kfbuilds/setup_ubuntu_mac.sh
+              chmod +x "${{ secrets.BASE_DIR }}"/kfbuilds/setup_ubuntu_mac.sh
               echo "grant access"
-              ./${{ secrets.BASE_DIR }}/kfbuilds/setup_ubuntu_mac.sh 
+              ./"${{ secrets.BASE_DIR }}"/kfbuilds/setup_ubuntu_mac.sh 
               echo "successfully execute .sh file "
           else
               echo "Directory ${{ secrets.BASE_DIR }} does not exist."
