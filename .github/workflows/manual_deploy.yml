@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    name: deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -17,10 +18,10 @@ jobs:
         ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       
     - name: connect
-    run: ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+      run: ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
       
     - name: checked connect or not
-    run: |
-      "Base Path: ${{ secrets.BASE_PATH }}"  
-      la -a
+        run: |
+          "Base Path: ${{ secrets.BASE_PATH }}"  
+          la -a
 
