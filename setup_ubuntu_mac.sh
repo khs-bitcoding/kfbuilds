@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Check if .env file exists in the same directory
+# Check if .env file exists in the same directory New update
 if [ ! -f .env ]; then
     echo "Error: .env file not found! Please create one in the current directory."
     exit 1
